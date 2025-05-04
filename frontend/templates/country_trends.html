@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country-wise Rainfall Trends</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600">Country-wise Rainfall Trends</h1>
+            <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Back to Prediction</a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Annual Rainfall Bar Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Annual Rainfall by State</h2>
+                <canvas id="annualChart"></canvas>
+            </div>
+
+            <!-- Monthly Distribution Line Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Monthly Rainfall Distribution</h2>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+
+            <!-- State-wise Details Table -->
+            <div class="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+                <h2 class="text-xl font-semibold mb-4">Detailed State-wise Rainfall Data</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Annual Rainfall (mm)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monthly Distribution</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stateTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display country trends data
+        async function loadCountryTrends() {
+            try {
+                const response = await fetch('/country-trends');
+                const data = await response.json();
+
+                // Create Annual Rainfall Bar Chart
+                new Chart(document.getElementById('annualChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.states,
+                        datasets: [{
+                            label: 'Annual Rainfall (mm)',
+                            data: data.annual_rainfall,
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Rainfall (mm)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Create Monthly Distribution Line Chart
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                new Chart(document.getElementById('monthlyChart'), {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: data.states.map((state, index) => ({
+                            label: state,
+                            data: data.monthly_distribution[state],
+                            borderColor: `hsl(${index * 360 / data.states.length}, 70%, 50%)`,
+                            fill: false
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Rainfall (mm)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Populate State Table
+                const tableBody = document.getElementById('stateTableBody');
+                tableBody.innerHTML = '';
+                data.states.forEach((state, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${state}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.annual_rainfall[index].toFixed(2)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            ${months.map((month, i) => 
+                                `${month}: ${data.monthly_distribution[state][i].toFixed(2)}mm`
+                            ).join(', ')}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading country trends:', error);
+                alert('Error loading country trends data');
+            }
+        }
+
+        // Load data when page loads
+        loadCountryTrends();
+    </script>
+</body>
+</html> 

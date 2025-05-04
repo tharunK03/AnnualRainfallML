@@ -1,0 +1,28 @@
+/* Custom styles */
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animation for the result */
+#result {
+    transition: all 0.3s ease-in-out;
+}
+
+#result.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+#result:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
+} 

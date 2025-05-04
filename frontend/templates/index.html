@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rainfall Prediction System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600">Region-wise Monthly Rainfall Prediction</h1>
+            <a href="/country-trends" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">View Country Trends</a>
+        </div>
+        
+        <!-- Prediction Form -->
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+            <form id="predictionForm" class="space-y-4">
+                <div class="form-group">
+                    <label for="region" class="block text-sm font-medium text-gray-700">Region</label>
+                    <input type="text" id="region" name="region" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="jan" class="block text-sm font-medium text-gray-700">January Rainfall</label>
+                        <input type="number" id="jan" name="jan" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="feb" class="block text-sm font-medium text-gray-700">February Rainfall</label>
+                        <input type="number" id="feb" name="feb" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="mar" class="block text-sm font-medium text-gray-700">March Rainfall</label>
+                        <input type="number" id="mar" name="mar" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="apr" class="block text-sm font-medium text-gray-700">April Rainfall</label>
+                        <input type="number" id="apr" name="apr" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="may" class="block text-sm font-medium text-gray-700">May Rainfall</label>
+                        <input type="number" id="may" name="may" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="jun" class="block text-sm font-medium text-gray-700">June Rainfall</label>
+                        <input type="number" id="jun" name="jun" step="0.01" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Predict July Rainfall
+                </button>
+            </form>
+
+            <div id="result" class="mt-6 hidden">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Predicted July Rainfall</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p id="predictionValue" class="font-bold"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Data Section -->
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-6 text-blue-600">Historical Rainfall Data</h2>
+            
+            <form id="historicalForm" class="mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-group">
+                        <label for="historicalRegion" class="block text-sm font-medium text-gray-700">Region</label>
+                        <input type="text" id="historicalRegion" name="region" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="startYear" class="block text-sm font-medium text-gray-700">Start Year</label>
+                        <input type="number" id="startYear" name="startYear" min="1900" max="2023" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="form-group">
+                        <label for="endYear" class="block text-sm font-medium text-gray-700">End Year</label>
+                        <input type="number" id="endYear" name="endYear" min="1900" max="2023" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+                <button type="submit" 
+                        class="mt-4 w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    Show Historical Data
+                </button>
+            </form>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4">Yearly Rainfall Totals</h3>
+                    <canvas id="yearlyChart"></canvas>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4">Monthly Rainfall Distribution</h3>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Prediction Form Handler
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                region: document.getElementById('region').value,
+                jan: parseFloat(document.getElementById('jan').value),
+                feb: parseFloat(document.getElementById('feb').value),
+                mar: parseFloat(document.getElementById('mar').value),
+                apr: parseFloat(document.getElementById('apr').value),
+                may: parseFloat(document.getElementById('may').value),
+                jun: parseFloat(document.getElementById('jun').value)
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                document.getElementById('result').classList.remove('hidden');
+                document.getElementById('predictionValue').textContent = 
+                    `Predicted July Rainfall: ${data.predicted_rainfall.toFixed(2)} mm`;
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Historical Data Form Handler
+        let yearlyChart = null;
+        let monthlyChart = null;
+
+        document.getElementById('historicalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                region: document.getElementById('historicalRegion').value,
+                start_year: parseInt(document.getElementById('startYear').value),
+                end_year: parseInt(document.getElementById('endYear').value)
+            };
+
+            try {
+                const response = await fetch('/historical-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Update Yearly Chart
+                if (yearlyChart) {
+                    yearlyChart.destroy();
+                }
+                yearlyChart = new Chart(document.getElementById('yearlyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.years,
+                        datasets: [{
+                            label: 'Yearly Rainfall (mm)',
+                            data: data.yearly_totals,
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Rainfall (mm)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Update Monthly Chart
+                if (monthlyChart) {
+                    monthlyChart.destroy();
+                }
+                monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.years,
+                        datasets: Object.entries(data.monthly_averages).map(([month, values]) => ({
+                            label: month,
+                            data: values,
+                            borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                            fill: false
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Rainfall (mm)'
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html> 
